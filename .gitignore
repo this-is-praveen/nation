@@ -1,0 +1,31 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*.so
+
+# Virtual environment
+venv/
+.env
+*.env
+
+# Docker
+*.log
+*.pid
+*.gz
+*.swp
+Dockerfile
+docker-compose.yml
+
+# Python packaging
+*.egg-info/
+dist/
+build/
+*.pyc
+
+# VSCode and IDE settings
+.vscode/
+.idea/
+
+# System files
+.DS_Store
+Thumbs.db
