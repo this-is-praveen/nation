@@ -1,7 +1,8 @@
 from fastapi import FastAPI, File, HTTPException, UploadFile
-from pydantic import BaseModel
+from pydantic import BaseModel, HttpUrl
 from typing import List
 import numpy as np
+import requests
 
 app = FastAPI()
 
@@ -23,6 +24,7 @@ class EmbeddingInput(BaseModel):
 class EmbeddingQuery(BaseModel):
     embedding_list: List[float]
     query_embedding: List[float]
+    
 
 # Endpoint: Generate embeddings (already existing)
 @app.post("/generate-embeddings")
@@ -47,6 +49,35 @@ async def generate_embeddings(file: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error generating embeddings: {str(e)}")
 
+class ImageUrlInput(BaseModel):
+    url: HttpUrl
+
+@app.post("/generate-embeddings-from-url")
+async def generate_embeddings_from_url(image_url: ImageUrlInput):
+    """
+    Accepts an image URL and returns its embeddings.
+    """
+    try:
+        # Download the image from the URL
+        response = requests.get(str(image_url.url))
+        response.raise_for_status()  # Raise an exception for bad status codes
+        
+        # Open the image from bytes
+        image = Image.open(io.BytesIO(response.content)).convert("RGB")
+
+        # Preprocess the image and generate embeddings
+        inputs = processor(images=image, return_tensors="pt")
+        with torch.no_grad():
+            embeddings = model.get_image_features(**inputs)
+
+        # Convert embeddings to a list and return as JSON
+        embedding_list = embeddings.squeeze().tolist()
+        return {"embeddings": embedding_list}
+
+    except requests.RequestException as e:
+        raise HTTPException(status_code=400, detail=f"Error downloading image: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generating embeddings: {str(e)}")
 
 # Endpoint 1: Insights API
 @app.post("/insights")
