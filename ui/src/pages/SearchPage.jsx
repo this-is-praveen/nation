@@ -27,6 +27,21 @@ const SearchPage = () => {
   return (
     <Container>
       <motion.div
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.8 }}
+      >
+        <Typography
+          variant="h2"
+          align="center"
+          gutterBottom
+          sx={{ fontWeight: "bold", mt: 4 }}
+        >
+          Mist
+        </Typography>
+      </motion.div>
+
+      <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
