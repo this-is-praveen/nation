@@ -1,4 +1,4 @@
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, Form, File, HTTPException, UploadFile
 from pydantic import BaseModel, HttpUrl
 from typing import List
 import numpy as np
@@ -15,6 +15,7 @@ import io
 print("Loading CLIP model...")
 model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32")
 processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
+tokenizer = processor.tokenizer
 print("CLIP model loaded successfully!")
 
 # Input schema for insights and querying
@@ -122,6 +123,24 @@ async def query_embedding(payload: EmbeddingQuery):
         }
     }
 
+
+@app.post("/generate-query-embedding")
+async def generate_query_embedding(
+    query_text: str = Form(None),
+):
+    """
+    Accepts text generates embeddings, and returns them.
+    """
+    try:
+        # Generate embeddings for text
+        inputs = tokenizer([query_text], return_tensors="pt")
+        with torch.no_grad():
+            text_embeddings = model.get_text_features(**inputs)
+        embedding_list = text_embeddings.squeeze().tolist()
+        return {"embeddings": embedding_list}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generating embedding: {str(e)}")
 
 # Cosine Similarity Helper Function
 def cosine_similarity(vec1: np.ndarray, vec2: np.ndarray) -> float:
