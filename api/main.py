@@ -16,6 +16,27 @@ app.include_router(search_router, prefix="", tags=["Search"])
 app.include_router(info_router, prefix="", tags=["Info"])
 app.include_router(mongoInfo_router, prefix="", tags=["MongoData"])
 
+# Add "/" endpoint
+@app.get("/", tags=["Root"])
+async def root():
+    """
+    Root endpoint to provide basic API information.
+    """
+    return {"message": "Welcome to the API!", "project_name": settings.PROJECT_NAME, "version": settings.VERSION}
+
+# Add "/healthz" endpoint
+@app.get("/healthz", tags=["Health"])
+async def health_check():
+    """
+    Health check endpoint to verify the API is running and connected to MongoDB.
+    """
+    try:
+        # Test MongoDB connection
+        client.admin.command("ping")
+        return {"status": "ok", "message": "Service is healthy!"}
+    except Exception as e:
+        return {"status": "error", "message": f"Service unhealthy: {str(e)}"}
+
 # For running with Uvicorn
 if __name__ == "__main__":
     import uvicorn
