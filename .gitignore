@@ -13,8 +13,8 @@ venv/
 *.pid
 *.gz
 *.swp
-Dockerfile
-docker-compose.yml
+# Dockerfile
+# docker-compose.yml
 
 # Python packaging
 *.egg-info/
