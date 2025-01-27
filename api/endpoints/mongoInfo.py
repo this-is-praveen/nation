@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from bson import ObjectId
 from typing import List, Dict
-from api.services.mongo import collection
+from services.mongo import collection
 
 
 router = APIRouter()

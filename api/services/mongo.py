@@ -1,4 +1,4 @@
-from api.core.serviceInit import collection
+from core.serviceInit import collection
 from bson import ObjectId
 
 def search_embeddings(query_embedding: list, limit: int = 5):

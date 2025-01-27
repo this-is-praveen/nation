@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form
-from api.services.clip import generate_image_embedding, generate_text_embedding
-from api.models.schemas import ImageUrlInput
+from services.clip import generate_image_embedding, generate_text_embedding
+from models.schemas import ImageUrlInput
 import requests
 
 router = APIRouter()

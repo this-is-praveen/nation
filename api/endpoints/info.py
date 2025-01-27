@@ -1,8 +1,8 @@
 from fastapi import APIRouter, HTTPException
 from bson import ObjectId
 import numpy as np
-from api.models.schemas import DocumentIdRequest
-from api.services.mongo import get_document_by_id
+from models.schemas import DocumentIdRequest
+from services.mongo import get_document_by_id
 
 router = APIRouter()
 

@@ -1,8 +1,8 @@
 from fastapi import APIRouter, HTTPException
-from api.models.schemas import SearchByTextRequest, QueryRequest, MetaInfoRequest
-from api.services.mongo import search_embeddings, get_document_by_id
-from api.services.clip import generate_text_embedding, cosine_similarity
-from api.constants.labelInfo import PREDEFINED_LABELS
+from models.schemas import SearchByTextRequest, QueryRequest, MetaInfoRequest
+from services.mongo import search_embeddings, get_document_by_id
+from services.clip import generate_text_embedding, cosine_similarity
+from constants.labelInfo import PREDEFINED_LABELS
 import numpy as np
 
 router = APIRouter()

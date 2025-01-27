@@ -1,4 +1,4 @@
-from api.core.serviceInit import model, processor, tokenizer
+from core.serviceInit import model, processor, tokenizer
 from PIL import Image
 import torch
 import io

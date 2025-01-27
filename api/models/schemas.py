@@ -1,6 +1,6 @@
 from pydantic import BaseModel, HttpUrl
 from typing import List
-from api.constants.labelInfo import PREDEFINED_LABELS
+from constants.labelInfo import PREDEFINED_LABELS
 from dotenv import load_dotenv
 import os
 
