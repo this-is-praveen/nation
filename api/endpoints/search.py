@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException
-from api.models.schemas import SearchByTextRequest, QueryRequest
+from api.models.schemas import SearchByTextRequest, QueryRequest, MetaInfoRequest
 from api.services.mongo import search_embeddings, get_document_by_id
 from api.services.clip import generate_text_embedding, cosine_similarity
 from api.constants.labelInfo import PREDEFINED_LABELS
@@ -38,13 +38,13 @@ async def search_by_text(request: SearchByTextRequest):
         raise HTTPException(status_code=500, detail=f"Error during search: {str(e)}")
     
 @router.post("/get-meta-info")
-async def get_meta_info(id: str):
+async def get_meta_info(request: MetaInfoRequest):
     """
-    Fetch the embedding by document ID and return meta-information based on predefined labels.
+    Fetch the embedding by document ID and return meta-information based on provided or default labels.
     """
     try:
         # Fetch the document from the database
-        document = get_document_by_id(id)
+        document = get_document_by_id(request.id)
         if not document:
             raise HTTPException(status_code=404, detail="Document not found")
 
@@ -56,8 +56,9 @@ async def get_meta_info(id: str):
         # Convert embedding to NumPy array
         image_embedding = np.array(embedding)
 
+        labels = request.labels
         # Generate embeddings for predefined labels
-        label_embeddings = [generate_text_embedding(label) for label in PREDEFINED_LABELS]
+        label_embeddings = [generate_text_embedding(label) for label in labels]
 
         # Compute similarity scores
         similarities = [
@@ -65,7 +66,7 @@ async def get_meta_info(id: str):
                 "label": label,
                 "similarity": cosine_similarity(image_embedding, np.array(label_embedding))
             }
-            for label, label_embedding in zip(PREDEFINED_LABELS, label_embeddings)
+            for label, label_embedding in zip(labels, label_embeddings)
         ]
 
         # Sort labels by similarity (highest first)
