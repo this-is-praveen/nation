@@ -1,4 +1,6 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
 from core.serviceInit import client, db, collection, model, processor, tokenizer
 
 from core.config import settings
@@ -9,7 +11,13 @@ from endpoints.mongoInfo import router as mongoInfo_router
 
 # Initialize the FastAPI app
 app = FastAPI(title=settings.PROJECT_NAME, version=settings.VERSION)
-
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 # Include routers
 app.include_router(clip_router, prefix="", tags=["CLIP"])
 app.include_router(search_router, prefix="", tags=["Search"])
