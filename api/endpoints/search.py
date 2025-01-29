@@ -60,17 +60,25 @@ async def get_meta_info(request: MetaInfoRequest):
         # Generate embeddings for predefined labels
         label_embeddings = [generate_text_embedding(label) for label in labels]
 
-        # Compute similarity scores
-        similarities = [
-            {
-                "label": label,
-                "similarity": cosine_similarity(image_embedding, np.array(label_embedding))
-            }
-            for label, label_embedding in zip(labels, label_embeddings)
-        ]
+        similarities = []
+        for label, label_embedding in zip(labels, label_embeddings):
+            label_embedding_np = np.array(label_embedding)
 
-        # Sort labels by similarity (highest first)
-        similarities = sorted(similarities, key=lambda x: x["similarity"], reverse=True)
+            # Compute Euclidean Distance
+            distance = np.linalg.norm(image_embedding - label_embedding_np)
+
+            # Convert distance to similarity percentage (lower distance = higher similarity)
+            max_possible_distance = np.linalg.norm(np.ones_like(image_embedding))  # Normalize score
+            similarity_percentage = max(0, 100 - (distance / max_possible_distance) * 100)
+
+            similarities.append({
+                "label": label,
+                "distance": round(distance, 4),
+                "similarity_score": round(similarity_percentage, 2)  # Percentage format
+            })
+
+        # Sort by similarity score (highest first)
+        similarities = sorted(similarities, key=lambda x: x["similarity_score"], reverse=True)
 
         # Return the top 5 matches
         return {"meta_info": similarities[:5]}

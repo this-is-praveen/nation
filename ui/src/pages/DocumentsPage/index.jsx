@@ -7,13 +7,16 @@ import {
   TextField,
   CircularProgress,
   Alert,
-  Grid2,
+  Grid,
   Paper,
   Typography,
   Avatar,
+  Chip,
+  Stack,
 } from "@mui/material";
 import { useInView } from "react-intersection-observer";
 import TiltedCard from "../../assets/TiltedCard";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 const fetchDocuments = async ({ pageParam = 1, queryKey }) => {
   const [, { searchQuery }] = queryKey;
@@ -34,19 +37,26 @@ const fetchDocumentDetails = async (docId) => {
   return data;
 };
 
+const fetchMetaInfo = async (docId) => {
+  const { data } = await axios.post('http://localhost:5000/get-meta-info', {
+    id: docId,
+    labels: JSON.parse(sessionStorage.getItem("labels") || "[]")
+  });
+  const sorted = data.meta_info.sort((a, b) => b.similarity_score - a.similarity_score);
+  return sorted.filter(item => item.similarity_score > 20);
+};
+
 const DocumentsPage = () => {
   const [selectedDoc, setSelectedDoc] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const { ref, inView } = useInView();
 
-  // Search debounce
   useEffect(() => {
     const handler = setTimeout(() => setDebouncedQuery(searchQuery), 300);
     return () => clearTimeout(handler);
   }, [searchQuery]);
 
-  // Documents query
   const {
     data: documents,
     fetchNextPage,
@@ -61,170 +71,211 @@ const DocumentsPage = () => {
       lastPage.page < lastPage.total_pages ? lastPage.page + 1 : undefined,
   });
 
-  // Document details query
   const { data: docDetails } = useQuery({
     queryKey: ["document", selectedDoc],
     queryFn: () => fetchDocumentDetails(selectedDoc),
     enabled: !!selectedDoc,
   });
 
+  const { data: metaInfo, isLoading: metaLoading, error: metaError } = useQuery({
+    queryKey: ['metaInfo', selectedDoc],
+    queryFn: () => fetchMetaInfo(selectedDoc),
+    enabled: !!selectedDoc && !!sessionStorage.getItem("labels"),
+    staleTime: 1000 * 60 * 5
+  });
+
   useEffect(() => {
     if (inView && hasNextPage) fetchNextPage();
   }, [inView, hasNextPage]);
 
-  const flatDocuments =
-    documents?.pages.flatMap((page) => page.documents) || [];
+  const flatDocuments = documents?.pages.flatMap((page) => page.documents) || [];
+  const topResult = metaInfo?.[0];
 
   return (
-    <Grid2
-      container
-      spacing={4}
-      className="xxxxxxxxxxxxxxxx"
-      sx={{ p: 4, maxHeight: "calc(100vh - 180px)" }}
-    >
-      {/* Left Column - Document List */}
-      <Grid2 item xs={12} md={5} sx={{ maxHeight: "calc(100vh - 180px)" }}>
-        <Box sx={{ height: "calc(100vh - 180px)" }}>
-          <TextField
-            fullWidth
-            variant="outlined"
-            label="Search Documents"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            sx={{ mb: 3 }}
-          />
+    <Box sx={{ display: 'flex', height: 'calc(100vh - 64px)', p: 3, gap: 3 }}>
+      {/* Left Section - Search & Document List */}
+      <Box sx={{ width: '30%', height: '100%', display: 'flex', flexDirection: 'column' }}>
+        <TextField
+          fullWidth
+          variant="outlined"
+          label="Search Documents"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          sx={{ mb: 3 }}
+        />
 
-          {isError && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              Error loading documents
-            </Alert>
+        {isError && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            Error loading documents
+          </Alert>
+        )}
+
+        <Box sx={{
+          flex: 1,
+          overflow: 'auto',
+          pr: 2,
+          '&::-webkit-scrollbar': { width: '8px' },
+          '&::-webkit-scrollbar-thumb': {
+            bgcolor: 'primary.main',
+            borderRadius: '4px',
+          },
+        }}>
+          {flatDocuments.map((doc, index) => (
+            <motion.div
+              key={doc._id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.05 }}
+            >
+              <Paper
+                elevation={2}
+                onClick={() => setSelectedDoc(doc.id)}
+                sx={{
+                  p: 2,
+                  mb: 2,
+                  cursor: 'pointer',
+                  transition: '0.3s',
+                  backgroundColor: selectedDoc === doc.id ? 'primary.main' : 'background.paper',
+                  '&:hover': { transform: 'translateX(5px)', boxShadow: 4 },
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Avatar sx={{ bgcolor: 'secondary.main' }}>{doc.name[0]}</Avatar>
+                  <Typography variant="h6">{doc.name}</Typography>
+                </Box>
+              </Paper>
+            </motion.div>
+          ))}
+
+          {(isFetchingNextPage || isLoading) && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+              <CircularProgress />
+            </Box>
           )}
 
-          <Box
-            sx={{
-              height: "calc(100% - 125px)",
-              overflow: "auto",
-              pr: 2,
-              "&::-webkit-scrollbar": { width: "8px" },
-              "&::-webkit-scrollbar-thumb": {
-                bgcolor: "primary.main",
-                borderRadius: "4px",
-              },
-            }}
-          >
-            {flatDocuments.map((doc, index) => {
-              return (
-                <motion.div
-                  key={doc._id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                >
-                  <Paper
-                    elevation={2}
-                    onClick={() => setSelectedDoc(doc.id)}
-                    sx={{
-                      p: 2,
-                      mb: 2,
-                      cursor: "pointer",
-                      transition: "0.3s",
-                      backgroundColor:
-                        selectedDoc === doc.id
-                          ? "primary.main"
-                          : "background.paper",
-                      "&:hover": {
-                        transform: "translateX(5px)",
-                        boxShadow: 4,
-                      },
-                    }}
-                  >
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                      <Avatar sx={{ bgcolor: "secondary.main" }}>
-                        {doc.name[0]}
-                      </Avatar>
-                      <Typography variant="h6">{doc.name}</Typography>
-                    </Box>
-                  </Paper>
-                </motion.div>
-              );
-            })}
-
-            {(isFetchingNextPage || isLoading) && (
-              <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
-                <CircularProgress />
-              </Box>
-            )}
-
-            <div ref={ref} />
-          </Box>
+          <div ref={ref} />
         </Box>
-      </Grid2>
+      </Box>
 
-      <Grid2 item xs={12} md={7}>
-        <Box
-          sx={{
-            position: "sticky",
-            top: 20,
-            height: "calc(100vh - 200px)",
-            overflow: "auto",
-          }}
-        >
+      {/* Right Section - Details & Analysis */}
+      <Box sx={{ flex: 1, display: 'flex', gap: 3, height: '100%' }}>
+        {/* Document Details */}
+        <Box sx={{ width: '50%', height: '100%' }}>
           {docDetails && (
             <motion.div
               initial={{ opacity: 0, x: 50 }}
               animate={{ opacity: 1, x: 0 }}
+              style={{ height: '100%' }}
             >
-              <Paper elevation={4} sx={{ p: 4, borderRadius: 4 }}>
+              <Paper elevation={4} sx={{ p: 4, borderRadius: 4, height: '100%' }}>
                 {docDetails.mediaDetails?.imageUrl && (
-                  <Box
-                    sx={{
-                      mb: 4,
-                      borderRadius: 3,
-                      overflow: "hidden",
-                      boxShadow: 4,
-                    }}
-                  >
+                  <Box sx={{ mb: 4, borderRadius: 3, overflow: 'hidden' }}>
                     <TiltedCard
                       imageSrc={docDetails.mediaDetails.imageUrl}
                       altText={docDetails.name}
-                      showTooltip={false}
                       containerHeight="300px"
-                      containerWidth="auto"
                     />
                   </Box>
                 )}
 
-                <Box
-                  sx={{
-                    display: "Grid2",
-                    gap: 2,
-                    p: 3,
-                    bgcolor: "background.default",
-                    borderRadius: 3,
-                  }}
-                >
-                  <Typography variant="h4">{docDetails.name}</Typography>
-
-                  <Box sx={{ display: "flex", gap: 4 }}>
-                    <Box>
+                <Box sx={{ p: 3, bgcolor: 'background.default', borderRadius: 3 }}>
+                  <Typography variant="h4" gutterBottom>{docDetails.name}</Typography>
+                  <Grid container spacing={2}>
+                    <Grid item xs={6}>
                       <Typography variant="overline">Document ID</Typography>
-                      <Typography variant="body1">{docDetails._id}</Typography>
-                    </Box>
-
-                    <Box>
+                      <Typography>{docDetails._id}</Typography>
+                    </Grid>
+                    <Grid item xs={6}>
                       <Typography variant="overline">Last Updated</Typography>
-                      <Typography variant="body1">
+                      <Typography>
                         {new Date(docDetails.updatedDate).toLocaleDateString()}
                       </Typography>
-                    </Box>
-                  </Box>
+                    </Grid>
+                  </Grid>
                 </Box>
               </Paper>
             </motion.div>
           )}
         </Box>
-      </Grid2>
-    </Grid2>
+
+        {/* Meta Info Analysis */}
+        <Box sx={{ width: '50%', height: '100%' }}>
+          {metaInfo && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              style={{ height: '100%' }}
+            >
+              <Paper elevation={4} sx={{ p: 4, borderRadius: 4, height: '100%' }}>
+                <Typography variant="h5" gutterBottom>
+                  Semantic Analysis
+                </Typography>
+
+                {metaError && <Alert severity="error" sx={{ mb: 2 }}>Error loading data</Alert>}
+
+                {metaLoading ? (
+                  <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+                    <CircularProgress />
+                  </Box>
+                ) : (
+                  <>
+                    {topResult && (
+                      <Stack spacing={2} sx={{ mb: 4, p: 3, bgcolor: 'background.paper', borderRadius: 3 }}>
+                        <Typography variant="h6" color="primary">Best Match 🎯</Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                          <Chip
+                            label={`${topResult.similarity_score}%`}
+                            color="success"
+                            sx={{ fontSize: '1.2rem', px: 2 }}
+                          />
+                          <Typography variant="h5">{topResult.label}</Typography>
+                        </Box>
+                        <Typography variant="body2" color="text.secondary">
+                          Distance: {topResult.distance.toFixed(2)}
+                        </Typography>
+                      </Stack>
+                    )}
+
+                    <Box sx={{ height: 400 }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart
+                          data={metaInfo}
+                          layout="vertical"
+                          margin={{ left: 30, right: 20 }}
+                        >
+                          <XAxis
+                            type="number"
+                            domain={[0, 100]}
+                            tickFormatter={(value) => `${value}%`}
+                            label={{ value: 'Similarity Score', position: 'bottom' }}
+                          />
+                          <YAxis
+                            type="category"
+                            dataKey="label"
+                            width={150}
+                            tick={{ fontSize: 12 }}
+                          />
+                          <Tooltip
+                            formatter={(value) => [`${value}%`, 'Similarity']}
+                            contentStyle={{ borderRadius: 8 }}
+                          />
+                          <Bar
+                            dataKey="similarity_score"
+                            fill="#1AA6B4"
+                            radius={[0, 4, 4, 0]}
+                            animationDuration={800}
+                          />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </Box>
+                  </>
+                )}
+              </Paper>
+            </motion.div>
+          )}
+        </Box>
+      </Box>
+    </Box>
   );
 };
 

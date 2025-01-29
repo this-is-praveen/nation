@@ -1,13 +1,26 @@
-import { motion } from 'framer-motion';
+import { motion } from "framer-motion";
+import TextPressure from "../assets/TextPressure";
 
 export const HomePage = () => (
   <motion.div
     initial={{ opacity: 0 }}
     animate={{ opacity: 1 }}
     exit={{ opacity: 0 }}
-    style={{ padding: '2rem', textAlign: 'center' }}
+    style={{ padding: "2rem", textAlign: "center" }}
   >
-    <h1 style={{ fontSize: '4rem', marginBottom: '1rem' }}>MIST</h1>
-    <p style={{ color: '#66b2ff' }}>Advanced Analytics Platform</p>
+    <div style={{ position: "relative" }}>
+      <TextPressure
+        text="MIST!"
+        flex={true}
+        alpha={false}
+        stroke={false}
+        width={true}
+        weight={true}
+        italic={true}
+        textColor="#ffffff"
+        strokeColor="#ff0000"
+        minFontSize={456}
+      />
+    </div>
   </motion.div>
 );

@@ -18,7 +18,6 @@ import { NavigationSidebar } from "./components/NavigationSidebar";
 import { HomePage } from "./pages/HomePage";
 import { SetupPage } from "./pages/SetupPage";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import ProfilesPage from "./pages/ProfilesPage";
 import AppErrorBoundary from "./components/ErrorBoundary";
 import DocumentsPage from "./pages/DocumentsPage";
 
