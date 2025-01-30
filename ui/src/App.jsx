@@ -20,6 +20,8 @@ import { SetupPage } from "./pages/SetupPage";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import AppErrorBoundary from "./components/ErrorBoundary";
 import DocumentsPage from "./pages/DocumentsPage";
+import DevTools from "./pages/DevTools";
+import { SettingsProvider } from "./contexts/SettingsContext";
 
 const queryClient = new QueryClient();
 
@@ -42,11 +44,14 @@ const AnimatedRoutes = () => {
 
   return (
     <AnimatePresence mode="wait">
-      <Routes location={location} key={location.pathname}>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/profiles" element={<DocumentsPage />} />
-        <Route path="/setup" element={<SetupPage />} />
-      </Routes>
+      <SettingsProvider>
+        <Routes location={location} key={location.pathname}>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/profiles" element={<DocumentsPage />} />
+          <Route path="/setup" element={<SetupPage />} />
+          <Route path="/devtools" element={<DevTools />} />
+        </Routes>
+      </SettingsProvider>
     </AnimatePresence>
   );
 };

@@ -2,8 +2,5 @@ fastapi
 uvicorn
 transformers
 torch
-torchvision
-pillow
-python-multipart
-python-dotenv
 pymongo
+python-dotenv

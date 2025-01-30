@@ -1,11 +1,35 @@
-FROM python:3.11-slim
+# Stage 1: Build with minimal dependencies
+FROM python:3.11-slim as builder
 
 WORKDIR /app
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
 
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends gcc python3-dev && \
+    pip install --user -r requirements.txt && \
+    apt-get purge -y gcc python3-dev && \
+    apt-get autoremove -y && \
+    rm -rf /var/lib/apt/lists/*
+
+# Stage 2: Slim runtime
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Copy only necessary artifacts
+COPY --from=builder /root/.local /usr/local
 COPY . .
+
+# Cleanup Python artifacts
+RUN find /usr/local/lib/python3.11/site-packages -type d -name '__pycache__' -exec rm -rf {} + && \
+    find /usr/local/lib/python3.11/site-packages -type f -name '*.py[co]' -delete && \
+    find /usr/local/lib/python3.11/site-packages -type d -name 'tests' -exec rm -rf {} + && \
+    rm -rf /root/.cache
+
+ENV PYTHONPATH=/app \
+    TORCH_DEVICE=cpu \
+    TF_CPP_MIN_LOG_LEVEL=3
 
 EXPOSE 5000
 

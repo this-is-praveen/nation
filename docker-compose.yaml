@@ -1,23 +1,23 @@
-version: "3.9"
-
 services:
-  frontend:
-    build:
-      context: ./ui
-      dockerfile: Dockerfile
-    ports:
-      - "3000:80" # Expose React app on port 3000
-    depends_on:
-      - backend
-
   backend:
     build:
       context: ./api
       dockerfile: Dockerfile
     ports:
-      - "5000:5000" # Expose FastAPI app on port 5000
-    # environment:
-    #   # Pass environment variables if needed
-    #   MONGO_URI: "mongodb+srv://<userName>:<password>@basic-free-tier-cluster.vo3k8.mongodb.net/?retryWrites=true&w=majority&appName=Basic-Free-Tier-Cluster"
-    #   DATABASE_NAME: "Mist"
-    #   COLLECTION_NAME: "messages"
+      - "5000:5000"  # Expose FastAPI on port 5000
+    environment:
+      - DATABASE_NAME=Mist
+      - COLLECTION_NAME=messages
+      - MONGO_URI=mongodb+srv://mist_user:mist_password@basic-free-tier-cluster.vo3k8.mongodb.net/?retryWrites=true&w=majority&appName=Basic-Free-Tier-Cluster
+      - DEFAULT_LABELS=a nature scene,a vehicle,an animal,a building,a person,a house,a tree,a car,a cat,a dog  
+
+  frontend:
+    build:
+      context: ./ui
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"  # Expose Vite app on port 3000
+    depends_on:
+      - backend  # Ensure FastAPI starts first
+    environment:
+      - VITE_API_BASE_URL=http://localhost:5000
