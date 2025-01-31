@@ -1,5 +1,10 @@
-export const getPreferredLabeledData = () =>
-  JSON.parse(sessionStorage.getItem("labels")) || [];
+export const getPreferredLabeledData = () => {
+  const envData = import.meta.env?.VITE_LABELS
+    ? JSON.parse(import.meta.env?.VITE_LABELS)
+    : null;
+
+  return JSON.parse(sessionStorage.getItem("labels")) || envData || [];
+};
 
 export const getApiBaseUrl = () => {
   return (
