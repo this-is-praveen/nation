@@ -1,28 +1,41 @@
-import axios from 'axios';
-import { useSettings } from '../contexts/SettingsContext';
+import axios from "axios";
+import { useSettings } from "../contexts/SettingsContext";
+import { getApiBaseUrl } from "../constants";
 
-export const createApiClient = () => {
-  const { settings } = useSettings();
-  
-  const instance = axios.create({
-    baseURL: settings.apiBaseUrl,
-    timeout: 10000,
-  });
+// export const createApiClient = () => {
+//   const { settings } = useSettings();
 
-  instance.interceptors.response.use(
-    response => response,
-    error => {
-      if (error.response) {
-        return Promise.reject(error.response.data);
-      }
-      return Promise.reject(error);
-    }
-  );
+//   const instance = axios.create({
+//     baseURL: settings.apiBaseUrl,
+//     timeout: 10000,
+//   });
 
-  return instance;
-};
+//   instance.interceptors.response.use(
+//     response => response,
+//     error => {
+//       if (error.response) {
+//         return Promise.reject(error.response.data);
+//       }
+//       return Promise.reject(error);
+//     }
+//   );
 
-export const useApiClient = () => {
-  const apiClient = createApiClient();
-  return apiClient;
-};
+//   return instance;
+// };
+
+const axiosClient = axios.create({
+  baseURL: getApiBaseUrl() || "http://localhost:5000/",
+  timeout: 10000,
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
+axiosClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+export default axiosClient;

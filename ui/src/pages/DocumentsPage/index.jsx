@@ -7,7 +7,7 @@ import {
   TextField,
   CircularProgress,
   Alert,
-  Grid,
+  Grid2,
   Paper,
   Typography,
   Avatar,
@@ -17,10 +17,11 @@ import {
 import { useInView } from "react-intersection-observer";
 import TiltedCard from "../../assets/TiltedCard";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import axiosClient from "../../utils/apiClient";
 
 const fetchDocuments = async ({ pageParam = 1, queryKey }) => {
   const [, { searchQuery }] = queryKey;
-  const { data } = await axios.get("http://localhost:5000/list-documents", {
+  const { data } = await axiosClient.get("list-documents", {
     params: {
       page: pageParam,
       page_size: 10,
@@ -31,14 +32,13 @@ const fetchDocuments = async ({ pageParam = 1, queryKey }) => {
 };
 
 const fetchDocumentDetails = async (docId) => {
-  const { data } = await axios.get(
-    `http://localhost:5000/get-document/${docId}?include_embeddings=false`
+  const { data } = await axiosClient.get(`get-document/${docId}?include_embeddings=false`
   );
   return data;
 };
 
 const fetchMetaInfo = async (docId) => {
-  const { data } = await axios.post('http://localhost:5000/get-meta-info', {
+  const { data } = await axiosClient.post('get-meta-info', {
     id: docId,
     labels: JSON.parse(sessionStorage.getItem("labels") || "[]")
   });
@@ -92,8 +92,7 @@ const DocumentsPage = () => {
   const topResult = metaInfo?.[0];
 
   return (
-    <Box sx={{ display: 'flex', height: 'calc(100vh - 64px)', p: 3, gap: 3 }}>
-      {/* Left Section - Search & Document List */}
+    <Box sx={{ display: 'flex', height: 'calc(100vh - 128px)', p: 3, gap: 3, width: "80vw" }}>
       <Box sx={{ width: '30%', height: '100%', display: 'flex', flexDirection: 'column' }}>
         <TextField
           fullWidth
@@ -180,18 +179,18 @@ const DocumentsPage = () => {
 
                 <Box sx={{ p: 3, bgcolor: 'background.default', borderRadius: 3 }}>
                   <Typography variant="h4" gutterBottom>{docDetails.name}</Typography>
-                  <Grid container spacing={2}>
-                    <Grid item xs={6}>
+                  <Grid2 container spacing={2}>
+                    <Grid2 item xs={6}>
                       <Typography variant="overline">Document ID</Typography>
                       <Typography>{docDetails._id}</Typography>
-                    </Grid>
-                    <Grid item xs={6}>
+                    </Grid2>
+                    <Grid2 item xs={6}>
                       <Typography variant="overline">Last Updated</Typography>
                       <Typography>
                         {new Date(docDetails.updatedDate).toLocaleDateString()}
                       </Typography>
-                    </Grid>
-                  </Grid>
+                    </Grid2>
+                  </Grid2>
                 </Box>
               </Paper>
             </motion.div>

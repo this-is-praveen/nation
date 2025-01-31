@@ -22,6 +22,7 @@ import AppErrorBoundary from "./components/ErrorBoundary";
 import DocumentsPage from "./pages/DocumentsPage";
 import DevTools from "./pages/DevTools";
 import { SettingsProvider } from "./contexts/SettingsContext";
+import ImageUploadPage from "./pages/ImageUploadPage";
 
 const queryClient = new QueryClient();
 
@@ -47,9 +48,10 @@ const AnimatedRoutes = () => {
       <SettingsProvider>
         <Routes location={location} key={location.pathname}>
           <Route path="/" element={<HomePage />} />
-          <Route path="/profiles" element={<DocumentsPage />} />
+          <Route path="/document" element={<DocumentsPage />} />
           <Route path="/setup" element={<SetupPage />} />
           <Route path="/devtools" element={<DevTools />} />
+          <Route path="/add-document" element={<ImageUploadPage />} />
         </Routes>
       </SettingsProvider>
     </AnimatePresence>

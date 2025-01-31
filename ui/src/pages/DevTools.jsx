@@ -1,17 +1,23 @@
-import { useState } from 'react';
-import { Box, TextField, Button, Paper, Typography, Stack } from '@mui/material';
-import { useSettings } from '../contexts/SettingsContext';
+import { useState } from "react";
+import {
+  Box,
+  TextField,
+  Button,
+  Paper,
+  Typography,
+  Stack,
+} from "@mui/material";
+import { getApiBaseUrl } from "../constants";
 
 const DevTools = () => {
-  const { settings, updateSettings } = useSettings();
-  const [newBaseUrl, setNewBaseUrl] = useState(settings.apiBaseUrl);
+  const [newBaseUrl, setNewBaseUrl] = useState(getApiBaseUrl());
 
   const handleSave = () => {
-    updateSettings({ apiBaseUrl: newBaseUrl });
+    sessionStorage.setItem("api_base_url", newBaseUrl);
   };
 
   return (
-    <Box sx={{ p: 4, maxWidth: 800, margin: '0 auto' }}>
+    <Box sx={{ p: 4, maxWidth: 800, margin: "0 auto" }}>
       <Paper elevation={3} sx={{ p: 4 }}>
         <Typography variant="h4" gutterBottom>
           Development Tools
@@ -40,13 +46,17 @@ const DevTools = () => {
               Current Configuration
             </Typography>
             <pre>
-              {JSON.stringify({
-                apiBaseUrl: settings.apiBaseUrl,
-                axiosConfig: {
-                  baseURL: settings.apiBaseUrl,
-                  timeout: 10000
-                }
-              }, null, 2)}
+              {JSON.stringify(
+                {
+                  apiBaseUrl: newBaseUrl,
+                  axiosConfig: {
+                    baseURL: newBaseUrl,
+                    timeout: 10000,
+                  },
+                },
+                null,
+                2
+              )}
             </pre>
           </Box>
         </Stack>

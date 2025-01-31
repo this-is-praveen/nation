@@ -1,8 +1,7 @@
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, status
 from bson import ObjectId
 from typing import List, Dict, Optional
 from services.mongo import collection
-
 
 router = APIRouter()
 
@@ -81,3 +80,37 @@ async def list_documents(
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching documents: {str(e)}")
+    
+@router.post("/insert-document", 
+            status_code=status.HTTP_201_CREATED,
+            summary="Insert new document with name and image URL")
+async def insert_document(
+    name: str = Query(..., min_length=1, max_length=100),
+    image_url: str = Query(..., regex=r"^https?://")
+):
+    """
+    Insert a new document with basic metadata:
+    - **name**: Display name for the document (1-100 characters)
+    - **image_url**: Valid HTTP/HTTPS URL for the image
+    """
+    try:
+        document = {
+            "name": name.strip(),
+            "mediaDetails": {
+                "imageUrl": image_url.strip()
+            }        
+        }
+
+        result = collection.insert_one(document)
+        
+        return {
+            "id": str(result.inserted_id),
+            "status": "success",
+            "message": "Document inserted successfully"
+        }
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Document insertion failed: {str(e)}"
+        )

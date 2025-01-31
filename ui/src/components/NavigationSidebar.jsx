@@ -12,6 +12,7 @@ import HomeIcon from "@mui/icons-material/Home";
 import DescriptionIcon from "@mui/icons-material/Description";
 import SettingsIcon from "@mui/icons-material/Settings";
 import DeveloperModeIcon from "@mui/icons-material/DeveloperMode";
+import AddPhotoIcon from "@mui/icons-material/AddAPhoto";
 
 export const NavigationSidebar = () => (
   <Paper
@@ -31,7 +32,8 @@ export const NavigationSidebar = () => (
     <List sx={{ width: "100%", flexGrow: 1 }}>
       {[
         { text: "Home", path: "/", icon: <HomeIcon /> },
-        { text: "Documents", path: "/profiles", icon: <DescriptionIcon /> },
+        { text: "Documents", path: "/document", icon: <DescriptionIcon /> },
+        { text: "Add Data", path: "/add-document", icon: <AddPhotoIcon /> },
         { text: "Settings", path: "/setup", icon: <SettingsIcon /> },
       ].map((item) => (
         <ListItem
