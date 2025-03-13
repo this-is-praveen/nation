@@ -11,7 +11,7 @@ import {
 import { useMutation } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
-import axiosClient from "../utils/apiClient";
+import axiosClient from "../../utils/apiClient";
 
 const AIChatPage = () => {
   const [messages, setMessages] = useState([]);
@@ -37,10 +37,12 @@ const AIChatPage = () => {
     },
     onSuccess: (response) => {
       // Append AI response to messages list
-      setMessages((prev) => [
-        ...prev,
-        { sender: "ai", text: response.data.response },
-      ]);
+      if (response.data) {
+        setMessages((prev) => [
+          ...prev,
+          { sender: "ai", text: response.data.response },
+        ]);
+      }
     },
   });
 

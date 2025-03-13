@@ -23,6 +23,7 @@ import DocumentsPage from "./pages/DocumentsPage";
 import DevTools from "./pages/DevTools";
 import { SettingsProvider } from "./contexts/SettingsContext";
 import ImageUploadPage from "./pages/ImageUploadPage";
+import AIChatPage from "./pages/DocumentsPage/AIChatPage";
 
 const queryClient = new QueryClient();
 
@@ -52,6 +53,7 @@ const AnimatedRoutes = () => {
           <Route path="/setup" element={<SetupPage />} />
           <Route path="/devtools" element={<DevTools />} />
           <Route path="/add-document" element={<ImageUploadPage />} />
+          <Route path="/chat-bot" element={<AIChatPage/>} />
         </Routes>
       </SettingsProvider>
     </AnimatePresence>

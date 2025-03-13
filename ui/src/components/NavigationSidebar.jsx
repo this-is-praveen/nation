@@ -13,6 +13,7 @@ import DescriptionIcon from "@mui/icons-material/Description";
 import SettingsIcon from "@mui/icons-material/Settings";
 import DeveloperModeIcon from "@mui/icons-material/DeveloperMode";
 import AddPhotoIcon from "@mui/icons-material/AddAPhoto";
+import SmartToyIcon from '@mui/icons-material/SmartToy';
 
 export const NavigationSidebar = () => (
   <Paper
@@ -34,6 +35,7 @@ export const NavigationSidebar = () => (
         { text: "Home", path: "/", icon: <HomeIcon /> },
         { text: "Documents", path: "/document", icon: <DescriptionIcon /> },
         { text: "Add Data", path: "/add-document", icon: <AddPhotoIcon /> },
+        { text: "Chat bot", path: "/chat-bot", icon: <SmartToyIcon /> },
         { text: "Settings", path: "/setup", icon: <SettingsIcon /> },
       ].map((item) => (
         <ListItem
