@@ -22,7 +22,7 @@ const Layout = () => {
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-            MIST Dashboard
+            HyperForge Dashboard
           </Typography>
         </Toolbar>
       </AppBar>

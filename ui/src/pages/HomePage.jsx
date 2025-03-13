@@ -10,7 +10,7 @@ export const HomePage = () => (
   >
     <div style={{ position: "relative" }}>
       <TextPressure
-        text="MIST!"
+        text="HyperForge !"
         flex={true}
         alpha={false}
         stroke={false}

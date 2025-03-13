@@ -34,7 +34,7 @@ const SiteHeader = () => (
         component="div"
         sx={{ flexGrow: 1, fontWeight: 700 }}
       >
-        MIST
+        HyperForge
       </Typography>
     </Toolbar>
   </AppBar>
