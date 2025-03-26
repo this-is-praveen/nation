@@ -75,6 +75,7 @@ export const NavigationSidebar = () => (
                 variant: "caption",
                 textAlign: "center",
                 fontSize: 10,
+                width:"max-content"
               }}
             />
           </ListItemButton>

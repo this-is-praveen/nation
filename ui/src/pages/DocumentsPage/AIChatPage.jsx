@@ -7,16 +7,38 @@ import {
   Stack,
   TextField,
   Typography,
+  Menu, MenuItem
 } from "@mui/material";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import axiosClient from "../../utils/apiClient";
 
 const AIChatPage = () => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const messagesEndRef = useRef(null);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const open = Boolean(anchorEl);
+  const [selectedInstruction, setSelectedInstruction] = useState("")
+
+  const handleClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  const fetchInstructions = async () => {
+    const { data } = await axiosClient.get("https://348a-194-195-115-244.ngrok-free.app/instructions?page=1&page_size=10");
+    return data;
+  }
+
+  const { data: instructionOptions } = useQuery({
+    queryKey: ["instruction"],
+    queryFn: () => fetchInstructions(),
+  });
+
 
   // Auto-scroll to the latest message
   useEffect(() => {
@@ -25,14 +47,15 @@ const AIChatPage = () => {
 
   // Mutation to call the AI response API
   const mutation = useMutation({
-    mutationFn: (userMessage) => {
+    mutationFn: (userMessage, selectedInstruction) => {
       // Retrieve developer-specific instructions from sessionStorage (stored as JSON)
-      const instructions = JSON.parse(
-        sessionStorage.getItem("ai_instructions") || "[]"
-      );
-      return axiosClient.post("/generate-ai-response", {
-        message: userMessage,
-        instructions,
+      // const instructions = JSON.parse(
+      //   sessionStorage.getItem("ai_instructions") || "[]"
+      // );
+      return axiosClient.post("https://348a-194-195-115-244.ngrok-free.app/ai/completions", {
+        "user_prompt": userMessage,
+        "instruction_id": selectedInstruction,
+        "model": "gpt-4o",
       });
     },
     onSuccess: (response) => {
@@ -46,7 +69,7 @@ const AIChatPage = () => {
     },
   });
 
-  const handleSend = (e) => {
+  const handleSend = useCallback((e) => {
     e.preventDefault();
     if (!input.trim()) return;
 
@@ -54,11 +77,13 @@ const AIChatPage = () => {
     setMessages((prev) => [...prev, { sender: "user", text: input }]);
 
     // Send the message to the API
-    mutation.mutate(input);
+    mutation.mutate(input, selectedInstruction);
 
     // Clear the input field
     setInput("");
-  };
+  }, [selectedInstruction])
+
+
 
   return (
     <Box
@@ -76,6 +101,37 @@ const AIChatPage = () => {
 
       {/* Conversation container */}
       <Paper sx={{ flex: 1, p: 2, overflowY: "auto", mb: 2 }}>
+        <Box sx={{ mb: 2 }}>
+          <Button
+            id="fade-button"
+            aria-controls={open ? 'fade-menu' : undefined}
+            aria-haspopup="true"
+            aria-expanded={open ? 'true' : undefined}
+            onClick={handleClick}
+            variant="outlined"
+
+          >
+            Instruction
+          </Button>
+          {instructionOptions?.instructions?.length > 0 &&
+            <Menu
+              id="fade-menu"
+              MenuListProps={{
+                'aria-labelledby': 'fade-button',
+              }}
+              anchorEl={anchorEl}
+              open={open}
+              onClose={handleClose}
+            >
+              {instructionOptions.instructions.map((_option, index) => (
+                <MenuItem key={index} onClick={() => {
+                  setSelectedInstruction(_option.id);
+                  handleClose();
+                }}>{_option.technology}</MenuItem>
+              ))}
+            </Menu>
+          }
+        </Box>
         <Stack spacing={2}>
           {messages.map((msg, index) => (
             <motion.div
@@ -132,7 +188,7 @@ const AIChatPage = () => {
           <Button
             variant="contained"
             type="submit"
-            disabled={mutation.isLoading}
+            disabled={mutation.isLoading || !selectedInstruction}
           >
             Send
           </Button>
