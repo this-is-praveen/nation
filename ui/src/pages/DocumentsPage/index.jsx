@@ -97,7 +97,7 @@ const DocumentsPage = () => {
         <TextField
           fullWidth
           variant="outlined"
-          label="Search Documents"
+          label="Search Document"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           sx={{ mb: 3 }}
