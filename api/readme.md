@@ -21,7 +21,8 @@ This project provides a FastAPI-based service for generating embeddings using th
 
 # To run application
 $env:ENV = "local"; python main.py
-uvicorn clip_service:app --host 0.0.0.0 --port 5000
+uvicorn main:app --reload
+### uvicorn clip_service:app --host 0.0.0.0 --port 5000
 
 # Test the API by
 curl -X POST "http://localhost:5000/generate-embeddings" \

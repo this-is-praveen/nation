@@ -1,87 +1,90 @@
-from fastapi import APIRouter, HTTPException
-from models.schemas import SearchByTextRequest, QueryRequest, MetaInfoRequest
-from services.mongo import search_embeddings, get_document_by_id
-from services.clip import generate_text_embedding, cosine_similarity
-from constants.labelInfo import PREDEFINED_LABELS
-import numpy as np
+from fastapi import APIRouter, HTTPException, Body
+from pydantic import BaseModel, Field
+from typing import List, Optional
+import openai
+import os
 
 router = APIRouter()
 
-@router.post("/search", tags=["Search"])
-async def search_embeddings_endpoint(request: QueryRequest):
-    try:
-        results = search_embeddings(request.query_embedding, request.limit)
-        return {"results": results}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+# Request Model
+class AIRequest(BaseModel):
+    user_prompt: str = Field(..., description="The user's main question or task")
+    instructions: Optional[List[str]] = Field(
+        None, 
+        description="List of guiding instructions for the AI"
+    )
+    strict_rules: Optional[List[str]] = Field(
+        None,
+        description="List of non-negotiable rules the AI must follow"
+    )
+    model: str = Field(
+        "gpt-4", 
+        description="OpenAI model to use (e.g., gpt-4, gpt-3.5-turbo)"
+    )
+    temperature: float = Field(
+        0.7, 
+        ge=0, 
+        le=1, 
+        description="Controls randomness (0=deterministic, 1=creative)"
+    )
 
-@router.post("/search-by-text", tags=["Search"])
-async def search_by_text(request: SearchByTextRequest):
+@router.post("/ai/completions", summary="Get AI completion with instructions")
+async def get_ai_completion(request: AIRequest):
     """
-    Accepts a query text, generates its embedding, and performs a search.
-    """
-    try:
-        # Step 1: Generate the text embedding
-        query_embedding = generate_text_embedding(request.query_text)
-        
-        # Step 2: Use the generated embedding to perform the search
-        results = search_embeddings(query_embedding=query_embedding, limit=request.limit)
-
-        for result in results:
-            if "_id" in result:
-                result["_id"] = str(result["_id"])
-                
-        # Return the search results
-        return {"query_text": request.query_text, "results": results}
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error during search: {str(e)}")
+    Generates AI response with strict adherence to provided instructions and rules.
     
-@router.post("/get-meta-info")
-async def get_meta_info(request: MetaInfoRequest):
-    """
-    Fetch the embedding by document ID and return meta-information based on provided or default labels.
+    The system message will contain the rules/instructions, while the user message 
+    contains the prompt. This ensures clear separation of concerns in the chat context.
     """
     try:
-        # Fetch the document from the database
-        document = get_document_by_id(request.id)
-        if not document:
-            raise HTTPException(status_code=404, detail="Document not found")
+        # Build system message with instructions and rules
+        system_message_parts = []
+        
+        if request.instructions:
+            system_message_parts.append("INSTRUCTIONS:")
+            system_message_parts.extend([f"- {i}" for i in request.instructions])
+            
+        if request.strict_rules:
+            system_message_parts.append("\nSTRICT RULES (MUST FOLLOW):")
+            system_message_parts.extend([f"- {r}" for r in request.strict_rules])
+        
+        system_message = "\n".join(system_message_parts) if system_message_parts else (
+            "You are a helpful AI assistant that provides accurate and concise responses."
+        )
 
-        # Get the image embedding
-        embedding = document.get("mediaDetails", {}).get("imageEmbeddings")
-        if not embedding:
-            raise HTTPException(status_code=404, detail="Image embedding not found in the document")
+        client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        
+        response = client.chat.completions.create(
+            model=request.model,
+            messages=[
+                {
+                    "role": "system",
+                    "content": system_message
+                },
+                {
+                    "role": "user",
+                    "content": request.user_prompt
+                }
+            ],
+            temperature=request.temperature,
+            max_tokens=2000
+        )
 
-        # Convert embedding to NumPy array
-        image_embedding = np.array(embedding)
-
-        labels = request.labels
-        # Generate embeddings for predefined labels
-        label_embeddings = [generate_text_embedding(label) for label in labels]
-
-        similarities = []
-        for label, label_embedding in zip(labels, label_embeddings):
-            label_embedding_np = np.array(label_embedding)
-
-            # Compute Euclidean Distance
-            distance = np.linalg.norm(image_embedding - label_embedding_np)
-
-            # Convert distance to similarity percentage (lower distance = higher similarity)
-            max_possible_distance = np.linalg.norm(np.ones_like(image_embedding))  # Normalize score
-            similarity_percentage = max(0, 100 - (distance / max_possible_distance) * 100)
-
-            similarities.append({
-                "label": label,
-                "distance": round(distance, 4),
-                "similarity_score": round(similarity_percentage, 2)  # Percentage format
-            })
-
-        # Sort by similarity score (highest first)
-        similarities = sorted(similarities, key=lambda x: x["similarity_score"], reverse=True)
-
-        # Return the top 5 matches
-        return {"meta_info": similarities[:5]}
-
+        return {
+            "response": response.choices[0].message.content,
+            "usage": {
+                "prompt_tokens": response.usage.prompt_tokens,
+                "completion_tokens": response.usage.completion_tokens
+            }
+        }
+        
+    except openai.APIError as e:
+        raise HTTPException(
+            status_code=502,
+            detail=f"OpenAI API error: {str(e)}"
+        )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error: {str(e.detail)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Internal server error: {str(e)}"
+        )

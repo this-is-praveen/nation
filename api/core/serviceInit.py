@@ -12,12 +12,7 @@ logger = logging.getLogger(__name__)
 
 def display_banner():
     banner = r"""
-     __  __ _____ _____ _______ 
-    |  \/  |_   _/ ____|__   __|
-    | \  / | | || (___    | |   
-    | |\/| | | | \___ \   | |   
-    | |  | |_| |_ ___) |  | |   
-    |_|  |_|_____|_____/  |_|   
+
     
     MongoDB and CLIP Service Initializer                        
     """
@@ -47,6 +42,7 @@ try:
     client = MongoClient(uri)
     db = client[database_name]
     collection = db[collection_name]
+    secondary_collection = db["instructions"]
     # Test connection
     client.admin.command('ping')
     logger.info(f"Connected to MongoDB database: {database_name}, collection: {collection_name}")
