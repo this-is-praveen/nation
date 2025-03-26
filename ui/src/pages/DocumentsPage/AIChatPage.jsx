@@ -7,20 +7,26 @@ import {
   Stack,
   TextField,
   Typography,
-  Menu, MenuItem
+  Menu,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Select,
 } from "@mui/material";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { useCallback, useEffect, useRef, useState } from "react";
 import axiosClient from "../../utils/apiClient";
 
+const endPoint =
+  "http://127.0.0.1:5000" || "https://348a-194-195-115-244.ngrok-free.app";
 const AIChatPage = () => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const messagesEndRef = useRef(null);
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
-  const [selectedInstruction, setSelectedInstruction] = useState("")
+  const [selectedInstruction, setSelectedInstruction] = useState("");
 
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -30,15 +36,16 @@ const AIChatPage = () => {
   };
 
   const fetchInstructions = async () => {
-    const { data } = await axiosClient.get("https://348a-194-195-115-244.ngrok-free.app/instructions?page=1&page_size=10");
+    const { data } = await axiosClient.get(
+      `${endPoint}/instructions?page=1&page_size=10`
+    );
     return data;
-  }
+  };
 
   const { data: instructionOptions } = useQuery({
     queryKey: ["instruction"],
     queryFn: () => fetchInstructions(),
   });
-
 
   // Auto-scroll to the latest message
   useEffect(() => {
@@ -47,15 +54,15 @@ const AIChatPage = () => {
 
   // Mutation to call the AI response API
   const mutation = useMutation({
-    mutationFn: (userMessage, selectedInstruction) => {
+    mutationFn: (userMessage) => {
       // Retrieve developer-specific instructions from sessionStorage (stored as JSON)
       // const instructions = JSON.parse(
       //   sessionStorage.getItem("ai_instructions") || "[]"
       // );
-      return axiosClient.post("https://348a-194-195-115-244.ngrok-free.app/ai/completions", {
-        "user_prompt": userMessage,
-        "instruction_id": selectedInstruction,
-        "model": "gpt-4o",
+      return axiosClient.post(`${endPoint}/ai/completions`, {
+        user_prompt: userMessage,
+        instruction_id: selectedInstruction,
+        model: "gpt-4o",
       });
     },
     onSuccess: (response) => {
@@ -69,7 +76,7 @@ const AIChatPage = () => {
     },
   });
 
-  const handleSend = useCallback((e) => {
+  const handleSend = (e) => {
     e.preventDefault();
     if (!input.trim()) return;
 
@@ -77,13 +84,11 @@ const AIChatPage = () => {
     setMessages((prev) => [...prev, { sender: "user", text: input }]);
 
     // Send the message to the API
-    mutation.mutate(input, selectedInstruction);
+    mutation.mutate(input);
 
     // Clear the input field
     setInput("");
-  }, [selectedInstruction])
-
-
+  };
 
   return (
     <Box
@@ -99,38 +104,32 @@ const AIChatPage = () => {
         DevAssist Chat
       </Typography>
 
-      {/* Conversation container */}
       <Paper sx={{ flex: 1, p: 2, overflowY: "auto", mb: 2 }}>
         <Box sx={{ mb: 2 }}>
-          <Button
-            id="fade-button"
-            aria-controls={open ? 'fade-menu' : undefined}
-            aria-haspopup="true"
-            aria-expanded={open ? 'true' : undefined}
-            onClick={handleClick}
-            variant="outlined"
-
-          >
-            Instruction
-          </Button>
-          {instructionOptions?.instructions?.length > 0 &&
-            <Menu
-              id="fade-menu"
-              MenuListProps={{
-                'aria-labelledby': 'fade-button',
+          <FormControl fullWidth>
+            <InputLabel id="instruction-select-label">Instruction</InputLabel>
+            <Select
+              labelId="instruction-select-label"
+              id="instruction-select"
+              value={selectedInstruction || ""}
+              onChange={(e) => {
+                console.log("selected option:", e.target.value);
+                setSelectedInstruction(e.target.value);
               }}
-              anchorEl={anchorEl}
-              open={open}
-              onClose={handleClose}
+              label="Instruction"
+              variant="outlined"
             >
-              {instructionOptions.instructions.map((_option, index) => (
-                <MenuItem key={index} onClick={() => {
-                  setSelectedInstruction(_option.id);
-                  handleClose();
-                }}>{_option.technology}</MenuItem>
-              ))}
-            </Menu>
-          }
+              {instructionOptions?.instructions?.length > 0 ? (
+                instructionOptions.instructions.map((_option, index) => (
+                  <MenuItem key={index} value={_option.id}>
+                    {_option.technology}
+                  </MenuItem>
+                ))
+              ) : (
+                <MenuItem disabled>No options available</MenuItem>
+              )}
+            </Select>
+          </FormControl>
         </Box>
         <Stack spacing={2}>
           {messages.map((msg, index) => (
@@ -143,7 +142,7 @@ const AIChatPage = () => {
                 sx={{
                   p: 2,
                   backgroundColor:
-                    msg.sender === "user" ? "primary.light" : "grey.100",
+                    msg.sender === "user" ? "primary.light" : "grey.700",
                 }}
               >
                 <Typography
